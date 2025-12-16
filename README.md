@@ -106,7 +106,7 @@ pip install -r requirements.txt
 
 We provide a demo for the HY-World 1.5 model for quick start.
 
-<video src="assets/web-demo.mp4" controls width="100%"></video>
+https://github.com/user-attachments/assets/3a3ab5fd-409a-4fa8-a39a-4aa1a09691e2
 
 
 Try our **online demo** without installation: https://3d.hunyuan.tencent.com/sceneTo3D
