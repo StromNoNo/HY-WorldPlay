@@ -266,7 +266,7 @@ https://github.com/user-attachments/assets/f165f409-5a74-4e19-a32c-fc98d92259e1
 
 @inproceedings{wang2025compass,
   title={WorldCompass: Reinforcement Learning for Long-Horizon World Models},
-  author={Wang, Zehan and Wang, Tengfei and Zhang, Haiyu and Sun, Wenqiang and Wu, Junta and Wang, Haoyuan and Wang, Zhenwei and Zhao, Hengshuang and Guo, Chunchao and Zhao, Zhou},
+  author={Zehan Wang and Tengfei Wang and Haiyu Zhang and Wenqiang Sun and Junta Wu and Haoyuan Wang and Zhenwei Wang and Hengshuang Zhao and Chunchao Guo and Zhou Zhao},
   journal = {arXiv preprint},
   year = 2025
 }
