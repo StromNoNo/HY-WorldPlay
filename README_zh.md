@@ -146,7 +146,7 @@ AR_DISTILL_ACTION_MODEL_PATH=<download_script打印的路径>/ar_distilled_actio
 | `IMAGE_PATH` | 输入图像路径（I2V 必需） |
 | `NUM_FRAMES` | 要生成的帧数（默认：125） |
 | `N_INFERENCE_GPU` | 并行推理的 GPU 数量 |
-| `POSE_JSON_PATH` | 相机轨迹文件 |
+| `POSE` | 相机轨迹：姿态字符串（如 `'w-3, right-0.5'`）或 JSON 文件路径 |
 
 ### 模型选择
 
@@ -167,12 +167,46 @@ AR_DISTILL_ACTION_MODEL_PATH=<download_script打印的路径>/ar_distilled_actio
    --action_ckpt $AR_DISTILL_ACTION_MODEL_PATH --few_step true --num_inference_steps 4 --model_type 'ar'
    ```
 
-### 自定义相机轨迹
+### 相机轨迹控制
 
-使用 `generate_custom_trajectory.py` 创建自定义相机路径：
+您有两种方式来控制相机轨迹：
+
+#### 方式 1：姿态字符串（推荐用于快速测试）
+
+在 `run.sh` 中设置 `POSE` 变量使用直观的姿态字符串：
+
+```bash
+POSE='w-3, right-0.5, d-4'
+```
+
+**支持的动作：**
+- **移动**: `w` (前进), `s` (后退), `a` (左移), `d` (右移)
+- **旋转**: `up` (俯仰向上), `down` (俯仰向下), `left` (偏航向左), `right` (偏航向右)
+- **格式**: `动作-时长`，时长单位为秒
+
+**示例：**
+```bash
+# 前进 6 秒（默认值）
+POSE='w-6'
+
+# 前进 3 秒，右转 0.5 秒，右移 4 秒
+POSE='w-3, right-0.5, d-4'
+
+# 复杂轨迹
+POSE='w-2, right-1, d-1.5, up-0.5'
+```
+
+#### 方式 2：自定义 JSON 文件
+
+对于更复杂的轨迹，使用 `generate_custom_trajectory.py`：
 
 ```bash
 python generate_custom_trajectory.py
+```
+
+然后在 `run.sh` 中设置 JSON 文件路径：
+```bash
+POSE='./assets/pose/your_custom_trajectory.json'
 ```
 
 ### 提示重写（可选）

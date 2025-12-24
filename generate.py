@@ -31,6 +31,7 @@ from scipy.spatial.transform import Rotation as R
 from hyvideo.pipelines.worldplay_video_pipeline import HunyuanVideo_1_5_Pipeline
 from hyvideo.commons.parallel_states import initialize_parallel_state
 from hyvideo.commons.infer_state import initialize_infer_state
+from generate_custom_trajectory import generate_camera_trajectory_local
 
 parallel_dims = initialize_parallel_state(sp=int(os.environ.get('WORLD_SIZE', '1')))
 torch.cuda.set_device(int(os.environ.get('LOCAL_RANK', '0')))
@@ -51,8 +52,143 @@ def one_hot_to_one_dimension(one_hot):
     y = torch.tensor([mapping[tuple(row.tolist())] for row in one_hot])
     return y
 
-def pose_to_input(pose_json_path, latent_chunk_num, tps=False):
-    pose_json = json.load(open(pose_json_path, 'r'))
+def parse_pose_string(pose_string, fps=6):
+    """
+    Parse pose string to motions list.
+    Format: "w-3, right-0.5, d-4"
+    - w: forward movement
+    - s: backward movement
+    - a: left movement
+    - d: right movement
+    - up: pitch up rotation
+    - down: pitch down rotation
+    - left: yaw left rotation
+    - right: yaw right rotation
+    - number after dash: duration in seconds
+
+    Args:
+        pose_string: str, comma-separated pose commands
+        fps: int, frames per second (default 24)
+
+    Returns:
+        list of dict: motions for generate_camera_trajectory_local
+    """
+    # Movement amount per frame
+    forward_speed = 0.08  # units per frame
+    yaw_speed = np.deg2rad(3)  # radians per frame
+    pitch_speed = np.deg2rad(3)  # radians per frame
+
+    motions = []
+    commands = [cmd.strip() for cmd in pose_string.split(',')]
+
+    for cmd in commands:
+        if not cmd:
+            continue
+
+        parts = cmd.split('-')
+        if len(parts) != 2:
+            raise ValueError(f"Invalid pose command: {cmd}. Expected format: 'action-duration'")
+
+        action = parts[0].strip()
+        try:
+            duration = float(parts[1].strip())
+        except ValueError:
+            raise ValueError(f"Invalid duration in command: {cmd}")
+
+        num_frames = int(duration * fps)
+
+        # Parse action and create motion dict
+        if action == 'w':
+            # Forward
+            for _ in range(num_frames):
+                motions.append({"forward": forward_speed})
+        elif action == 's':
+            # Backward
+            for _ in range(num_frames):
+                motions.append({"forward": -forward_speed})
+        elif action == 'a':
+            # Left
+            for _ in range(num_frames):
+                motions.append({"right": -forward_speed})
+        elif action == 'd':
+            # Right
+            for _ in range(num_frames):
+                motions.append({"right": forward_speed})
+        elif action == 'up':
+            # Pitch up
+            for _ in range(num_frames):
+                motions.append({"pitch": pitch_speed})
+        elif action == 'down':
+            # Pitch down
+            for _ in range(num_frames):
+                motions.append({"pitch": -pitch_speed})
+        elif action == 'left':
+            # Yaw left
+            for _ in range(num_frames):
+                motions.append({"yaw": -yaw_speed})
+        elif action == 'right':
+            # Yaw right
+            for _ in range(num_frames):
+                motions.append({"yaw": yaw_speed})
+        else:
+            raise ValueError(f"Unknown action: {action}. Supported actions: w, s, a, d, up, down, left, right")
+
+    return motions
+
+def pose_string_to_json(pose_string):
+    """
+    Convert pose string to pose JSON format.
+
+    Args:
+        pose_string: str, comma-separated pose commands
+
+    Returns:
+        dict: pose JSON with extrinsic and intrinsic parameters
+    """
+    motions = parse_pose_string(pose_string)
+    poses = generate_camera_trajectory_local(motions)
+
+    # Default intrinsic matrix (from generate_custom_trajectory.py)
+    intrinsic = [
+        [969.6969696969696, 0.0, 960.0],
+        [0.0, 969.6969696969696, 540.0],
+        [0.0, 0.0, 1.0]
+    ]
+
+    pose_json = {}
+    for i, p in enumerate(poses):
+        pose_json[str(i)] = {"extrinsic": p.tolist(), "K": intrinsic}
+
+    return pose_json
+
+def pose_to_input(pose_data, latent_chunk_num, tps=False):
+    """
+    Convert pose data to input tensors.
+
+    Args:
+        pose_data: str or dict
+            - If str ending with '.json': path to JSON file
+            - If str: pose string (e.g., "w-3, right-0.5, d-4")
+            - If dict: pose JSON data
+        latent_chunk_num: int, number of latent chunks
+        tps: bool, third person mode
+
+    Returns:
+        tuple: (w2c_list, intrinsic_list, action_one_label)
+    """
+    # Handle different input types
+    if isinstance(pose_data, str):
+        if pose_data.endswith('.json'):
+            # Load from JSON file
+            pose_json = json.load(open(pose_data, 'r'))
+        else:
+            # Parse pose string
+            pose_json = pose_string_to_json(pose_data)
+    elif isinstance(pose_data, dict):
+        pose_json = pose_data
+    else:
+        raise ValueError(f"Invalid pose_data type: {type(pose_data)}. Expected str or dict.")
+
     pose_keys = list(pose_json.keys())
     intrinsic_list = []
     w2c_list = []
@@ -196,7 +332,7 @@ def generate_video(args):
     if not args.rewrite:
         rank0_log("Warning: Prompt rewriting is disabled. This may affect the quality of generated videos.", "WARNING")
 
-    viewmats, Ks, action = pose_to_input(args.pose_json_path, (args.video_length - 1) // 4 + 1)
+    viewmats, Ks, action = pose_to_input(args.pose, (args.video_length - 1) // 4 + 1)
 
     if task == 'i2v':
         extra_kwargs['reference_image'] = args.image_path
@@ -246,9 +382,9 @@ def generate_video(args):
 def main():
     parser = argparse.ArgumentParser(description='Generate video using HunyuanWorld-1.5')
 
-    parser.add_argument("--pose_json_path", type=str,
+    parser.add_argument("--pose", type=str,
                         default="./assets/pose/test_forward_32_latents.json",
-                        help="Path to the action pose file")
+                        help="Path to pose JSON file or pose string (e.g., 'w-3, right-0.5, d-4')")
     parser.add_argument(
         '--prompt', type=str, required=True,
         help='Text prompt for video generation'

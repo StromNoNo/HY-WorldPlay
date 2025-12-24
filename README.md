@@ -181,7 +181,7 @@ In `run.sh`, you can configure:
 | `IMAGE_PATH` | Input image path (required for I2V) |
 | `NUM_FRAMES` | Number of frames to generate (default: 125) |
 | `N_INFERENCE_GPU` | Number of GPUs for parallel inference |
-| `POSE_JSON_PATH` | Camera trajectory file |
+| `POSE` | Camera trajectory: pose string (e.g., `'w-3, right-0.5'`) or JSON file path |
 
 ### Model Selection
 
@@ -202,12 +202,46 @@ Uncomment one of the three inference commands in `run.sh`:
    --action_ckpt $AR_DISTILL_ACTION_MODEL_PATH --few_step true --num_inference_steps 4 --model_type 'ar'
    ```
 
-### Custom Camera Trajectories
+### Camera Trajectory Control
 
-Use `generate_custom_trajectory.py` to create custom camera paths:
+You have two options to control camera trajectories:
+
+#### Option 1: Pose String (Recommended for Quick Testing)
+
+Use intuitive pose strings by setting the `POSE` variable in `run.sh`:
+
+```bash
+POSE='w-3, right-0.5, d-4'
+```
+
+**Supported Actions:**
+- **Movement**: `w` (forward), `s` (backward), `a` (left), `d` (right)
+- **Rotation**: `up` (pitch up), `down` (pitch down), `left` (yaw left), `right` (yaw right)
+- **Format**: `action-duration` where duration is in seconds
+
+**Examples:**
+```bash
+# Move forward for 6 seconds (default)
+POSE='w-6'
+
+# Move forward 3s, rotate right 0.5s, move right 4s
+POSE='w-3, right-0.5, d-4'
+
+# Complex trajectory
+POSE='w-2, right-1, d-1.5, up-0.5'
+```
+
+#### Option 2: Custom JSON Files
+
+For more complex trajectories, use `generate_custom_trajectory.py`:
 
 ```bash
 python generate_custom_trajectory.py
+```
+
+Then set the JSON file path in `run.sh`:
+```bash
+POSE='./assets/pose/your_custom_trajectory.json'
 ```
 
 ### Prompt Rewriting (Optional)
