@@ -116,11 +116,11 @@ https://github.com/user-attachments/assets/643a33a4-b677-4eff-ad1d-32205c594274
 
 ## 🧱 模型权重
 
-| 模型 |  下载 |
-|------|------|
-| HY-World1.5-Bidirectional-480P-I2V |  [下载地址](https://huggingface.co/tencent/HY-WorldPlay/tree/main/bidirectional_model) |
-| HY-World1.5-Autoregressive-480P-I2V |  [下载地址](https://huggingface.co/tencent/HY-WorldPlay/tree/main/ar_model) |
-| HY-World1.5-Autoregressive-480P-I2V-distill |  [下载地址](https://huggingface.co/tencent/HY-WorldPlay/tree/main/ar_distilled_action_model) |
+| 模型 | 描述 | 下载 |
+|------|------|------|
+| HY-World1.5-Bidirectional-480P-I2V | 双向注意力模型，具有跨所有帧的完整上下文感知能力 | [下载地址](https://huggingface.co/tencent/HY-WorldPlay/tree/main/bidirectional_model) |
+| HY-World1.5-Autoregressive-480P-I2V | 自回归模型，具有重构上下文记忆机制和单向的注意力机制以实现长期几何一致性 | [下载地址](https://huggingface.co/tencent/HY-WorldPlay/tree/main/ar_model) |
+| HY-World1.5-Autoregressive-480P-I2V-distill | 自回归模型的蒸馏版，针对推理优化（4步） | [下载地址](https://huggingface.co/tencent/HY-WorldPlay/tree/main/ar_distilled_action_model) |
 
 ## 🔑 推理
 
