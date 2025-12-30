@@ -264,7 +264,7 @@ def pose_to_input(pose_data, latent_num, tps=False):
     rotate_one_label = one_hot_to_one_dimension(rotate_one_hot)
     action_one_label = trans_one_label * 9 + rotate_one_label
 
-    return torch.tensor(w2c_list), torch.tensor(intrinsic_list), action_one_label
+    return torch.as_tensor(w2c_list), torch.as_tensor(intrinsic_list), action_one_label
 
 def save_video(video, path):
     if video.ndim == 5:
