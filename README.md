@@ -240,13 +240,13 @@ POSE='w-31'
 
 **Examples:**
 ```bash
-# Move forward for 31 latents (default). Generate [1 + 31]个latents
+# Move forward for 31 latents (default). Generate [1 + 31] latents
 POSE='w-31'
 
-# Move forward 3 latents, rotate right 1 latents, move right 4 latents. Generate [1 + 3 + 1 + 4]个latents
+# Move forward 3 latents, rotate right 1 latents, move right 4 latents. Generate [1 + 3 + 1 + 4] latents
 POSE='w-3, right-1, d-4'
 
-# Complex trajectory. Generate [1 + 2 + 1 + 2 + 4]个latents
+# Complex trajectory. Generate [1 + 2 + 1 + 2 + 4] latents
 POSE='w-2, right-1, d-2, up-4'
 ```
 
